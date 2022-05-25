@@ -114,8 +114,7 @@ public class LinkedListDeque<T> implements Deque<T> {
             return null;
         return getRecursive(sentinel.next, index);
     }
-
-    @Override
+    
     public Iterator<T> iterator() {
         return new LinkedListDequeIterator();
     }
