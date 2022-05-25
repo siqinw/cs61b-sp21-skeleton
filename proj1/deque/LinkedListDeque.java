@@ -114,7 +114,7 @@ public class LinkedListDeque<T> implements Deque<T> {
             return null;
         return getRecursive(sentinel.next, index);
     }
-    
+
     public Iterator<T> iterator() {
         return new LinkedListDequeIterator();
     }
@@ -139,14 +139,17 @@ public class LinkedListDeque<T> implements Deque<T> {
 
     @Override
     public boolean equals(Object o) {
-        if (o == this) return true;
+        if (o == this)
+            return true;
+        if (o == null)
+            return false;
         if (o.getClass() != this.getClass())
             return false;
         LinkedListDeque<T> LLD = (LinkedListDeque<T>) o;
         if (LLD.size() != this.size())
             return false;
         for (int i = 0; i < size(); i++) {
-            if (LLD.get(i) != this.get(i))
+            if (!LLD.get(i).equals(this.get(i)))
                 return false;
         }
         return true;

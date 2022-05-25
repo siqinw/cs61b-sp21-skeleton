@@ -170,22 +170,30 @@ public class ArrayDeque<T> implements Deque<T> {
         }
 
         public T next() {
-            T returnItem = items[wizPos];
+            T returnItem = get(wizPos);
             wizPos += 1;
             return returnItem;
         }
     }
 
 
+//    private boolean contains(T item) {
+//        for (T i : this)
+//            if (item.equals(i))
+//    }
+
     public boolean equals(Object o) {
-        if (o == this) return true;
+        if (o == this)
+            return true;
+        if (o == null)
+            return false;
         if (o.getClass() != this.getClass())
             return false;
         ArrayDeque<T> AD = (ArrayDeque<T>) o;
         if (AD.size() != this.size())
             return false;
         for (int i = 0; i < size(); i++) {
-            if (AD.get(i) != this.get(i))
+            if (!AD.get(i).equals(this.get(i)))
                 return false;
         }
         return true;
