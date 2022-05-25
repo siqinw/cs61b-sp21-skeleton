@@ -5,7 +5,9 @@ public interface Deque<T> extends Iterable<T> {
 
     public void addLast(T item);
 
-    public boolean isEmpty();
+    default public boolean isEmpty() {
+        return (size() == 0);
+    }
 
     public int size();
 
