@@ -8,7 +8,7 @@ public class ArrayDequeTest {
 
     @Test
     public void equalsTest() {
-        /*
+
         ArrayDeque<String> lld1 = new ArrayDeque<String>();
         ArrayDeque<Integer> lld2 = new ArrayDeque<Integer>();
         ArrayDeque<Integer> lld3 = new ArrayDeque<Integer>();
@@ -29,7 +29,7 @@ public class ArrayDequeTest {
         lld3.removeLast();
         lld3.addLast(54);
         assertFalse(lld2.equals(lld3));
-         */
+        
     }
 
     @Test
