@@ -1,7 +1,9 @@
 package deque;
 
+import java.util.Iterator;
+
 // Circular Linked List Implementation
-public class LinkedListDeque<T> {
+public class LinkedListDeque<T> implements Deque<T> {
 
     private int size;
     private node<T> sentinel;
@@ -25,6 +27,7 @@ public class LinkedListDeque<T> {
         size = 0;
     }
 
+    @Override
     public void addFirst(T item) {
         node<T> n = new node<>(item, sentinel, sentinel.next);
         sentinel.next.prev = n;
@@ -32,6 +35,7 @@ public class LinkedListDeque<T> {
         size += 1;
     }
 
+    @Override
     public void addLast(T item) {
         node<T> n = new node<>(item, sentinel.prev, sentinel);
         sentinel.prev.next = n;
@@ -39,14 +43,17 @@ public class LinkedListDeque<T> {
         size += 1;
     }
 
+    @Override
     public boolean isEmpty() {
         return sentinel.next == sentinel;
     }
 
+    @Override
     public int size() {
         return size;
     }
 
+    @Override
     public void printDeque() {
         node<T> n = sentinel.next;
         while (n != sentinel) {
@@ -56,6 +63,7 @@ public class LinkedListDeque<T> {
         System.out.println();
     }
 
+    @Override
     public T removeFirst() {
         if (isEmpty())
             return null;
@@ -71,6 +79,7 @@ public class LinkedListDeque<T> {
         return item;
     }
 
+    @Override
     public T removeLast() {
         if (isEmpty())
             return null;
@@ -86,6 +95,7 @@ public class LinkedListDeque<T> {
         return item;
     }
 
+    @Override
     public T get(int index) {
         if (index > size() - 1)
             return null;
@@ -109,24 +119,42 @@ public class LinkedListDeque<T> {
         return getRecursive(sentinel.next, index);
     }
 
+    @Override
+    public Iterator<T> iterator() {
+        return new LinkedListDequeIterator();
+    }
+
+    private class LinkedListDequeIterator implements Iterator<T> {
+        private int wizPos;
+
+        public LinkedListDequeIterator() {
+            wizPos = 0;
+        }
+
+        public boolean hasNext() {
+            return wizPos < size;
+        }
+
+        public T next() {
+            T returnItem = get(wizPos);
+            wizPos += 1;
+            return returnItem;
+        }
+    }
+
+    @Override
     public boolean equals(Object o) {
-        if (!(o instanceof LinkedListDeque))
+        if (o == this) return true;
+        if (o.getClass() != this.getClass())
             return false;
-        if (((LinkedListDeque<T>) o).size() != this.size())
+        LinkedListDeque<T> LLD = (LinkedListDeque<T>) o;
+        if (LLD.size() != this.size())
             return false;
-//        boolean equal = true;
-//        int s = size();
         for (int i = 0; i < size(); i++) {
-            if (((LinkedListDeque<T>) o).get(i) != this.get(i))
+            if (LLD.get(i) != this.get(i))
                 return false;
         }
         return true;
     }
 
-    /*
-    public Iterator<T> iterator(){
-
-    }
-
-     */
 }
