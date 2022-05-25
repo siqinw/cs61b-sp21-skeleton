@@ -2,7 +2,7 @@ package deque;
 
 import java.util.Iterator;
 
-public class ArrayDeque<T> implements Deque<T> {
+public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
 
     private int size, head, tail;
     private T[] items;
@@ -154,6 +154,7 @@ public class ArrayDeque<T> implements Deque<T> {
         return items[i];
     }
 
+    @Override
     public Iterator<T> iterator() {
         return new ArrayDequeIterator();
     }
@@ -177,10 +178,13 @@ public class ArrayDeque<T> implements Deque<T> {
     }
 
 
-//    private boolean contains(T item) {
-//        for (T i : this)
-//            if (item.equals(i))
-//    }
+    private boolean contains(T item) {
+        for (T i : this)
+            if (item.equals(i)) {
+                return true;
+            }
+        return false;
+    }
 
     public boolean equals(Object o) {
         if (o == this)
@@ -193,7 +197,7 @@ public class ArrayDeque<T> implements Deque<T> {
         if (AD.size() != this.size())
             return false;
         for (int i = 0; i < size(); i++) {
-            if (!AD.get(i).equals(this.get(i)))
+            if (!contains(AD.get(i)))
                 return false;
         }
         return true;

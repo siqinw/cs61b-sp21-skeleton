@@ -3,7 +3,7 @@ package deque;
 import java.util.Iterator;
 
 // Circular Linked List Implementation
-public class LinkedListDeque<T> implements Deque<T> {
+public class LinkedListDeque<T> implements Deque<T>, Iterable<T> {
 
     private int size;
     private node<T> sentinel;
@@ -115,6 +115,7 @@ public class LinkedListDeque<T> implements Deque<T> {
         return getRecursive(sentinel.next, index);
     }
 
+    @Override
     public Iterator<T> iterator() {
         return new LinkedListDequeIterator();
     }
@@ -137,6 +138,15 @@ public class LinkedListDeque<T> implements Deque<T> {
         }
     }
 
+
+    private boolean contains(T item) {
+        for (T i : this)
+            if (item.equals(i)) {
+                return true;
+            }
+        return false;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (o == this)
@@ -149,7 +159,7 @@ public class LinkedListDeque<T> implements Deque<T> {
         if (LLD.size() != this.size())
             return false;
         for (int i = 0; i < size(); i++) {
-            if (!LLD.get(i).equals(this.get(i)))
+            if (!contains(LLD.get(i)))
                 return false;
         }
         return true;
