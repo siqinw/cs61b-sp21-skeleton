@@ -1,5 +1,6 @@
 package bstmap;
 
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
@@ -107,6 +108,9 @@ public class BSTMap<K extends Comparable<K>, V> implements Map61B<K, V> {
             N.left = put(N.left, key, value);
         } else if (key.compareTo(N.key) > 0) {
             N.right = put(N.right, key, value);
+        } else {
+            N.value = value;
+            return N;
         }
         return N;
     }
@@ -117,28 +121,97 @@ public class BSTMap<K extends Comparable<K>, V> implements Map61B<K, V> {
         put(root, key, value);
     }
 
-    //    @Override
+    private void keySet(BSTNode<K, V> N, Set<K> keySet) {
+        if (N == null) {
+            return;
+        }
+
+        keySet(N.left, keySet);
+        keySet.add(N.key);
+        keySet(N.right, keySet);
+    }
+
+    @Override
     /* Returns a Set view of the keys contained in this map. Not required for Lab 7.
      * If you don't implement this, throw an UnsupportedOperationException. */
     public Set<K> keySet() {
-        throw new UnsupportedOperationException("");
+        Set<K> keySet = new HashSet<>();
+        keySet(root, keySet);
+        return keySet;
     }
 
-    //    @Override
+    private BSTNode<K, V> remove(BSTNode<K, V> N, K key) {
+        if (N == null) {
+            return null;
+        }
+        if (key == N.key) {
+            if (N.left == null && N.right == null) {
+                if (root == N) {
+                    root = null;
+                }
+                return null;
+            } else if (N.left == null) {
+                if (root == N) {
+                    root = N.right;
+                }
+                return N.right;
+            } else if (N.right == null) {
+                if (root == N) {
+                    root = N.left;
+                }
+                return N.left;
+            } else {
+                BSTNode<K, V> leftMax = findMax(N.left);
+                leftMax.right = N.right;
+                if (root == N) {
+                    root = leftMax;
+                }
+                return leftMax;
+            }
+        } else if (key.compareTo(N.key) < 0) {
+            N.left = remove(N.left, key);
+        } else {
+            N.right = remove(N.right, key);
+        }
+        return N;
+    }
+
+
+    private BSTNode<K, V> findMax(BSTNode<K, V> N) {
+        if (N.right == null) {
+            return N;
+        }
+        return findMax(N.right);
+    }
+
+
+    @Override
     /* Removes the mapping for the specified key from this map if present.
      * Not required for Lab 7. If you don't implement this, throw an
      * UnsupportedOperationException. */
     public V remove(K key) {
-        throw new UnsupportedOperationException("");
+        V val = get(key);
+        if (val == null) {
+            return null;
+        }
+        remove(root, key);
+        size -= 1;
+        return val;
     }
 
 
-    //    @Override
+    @Override
     /* Removes the entry for the specified key only if it is currently mapped to
      * the specified value. Not required for Lab 7. If you don't implement this,
      * throw an UnsupportedOperationException.*/
     public V remove(K key, V value) {
-        throw new UnsupportedOperationException("");
+        V val = get(key);
+        if (val == null || val != value) {
+            return null;
+        }
+        remove(root, key);
+        size -= 1;
+        return value;
     }
 
     //    @Override
