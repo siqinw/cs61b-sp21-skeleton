@@ -167,6 +167,11 @@ public class MyHashMap<K, V> implements Map61B<K, V> {
 
     @Override
     public void put(K key, V value) {
+        // Resize
+        if ((double) numItems / numBuckets > maxLoad) {
+            resize();
+        }
+
         int hash = hashFunction(key);
         // Replace value if key match
         for (Node n : buckets[hash]) {
@@ -174,10 +179,6 @@ public class MyHashMap<K, V> implements Map61B<K, V> {
                 n.value = value;
                 return;
             }
-        }
-        // Resize
-        if ((double) numItems / numBuckets > maxLoad) {
-            resize();
         }
 
         put(key, value, buckets);
