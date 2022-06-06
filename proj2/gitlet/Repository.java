@@ -1,6 +1,9 @@
 package gitlet;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
@@ -34,9 +37,11 @@ public class Repository {
     public static final File GITLET_DIR = join(CWD, ".gitlet");
     public static final File BLOB_DIR = join(GITLET_DIR, "blobs");
     public static final File COMMIT_DIR = join(GITLET_DIR, "commits");
+    public static final File STAGE_DIR = join(GITLET_DIR, "stage");
 
     public static final File COMMITS_FILE = join(COMMIT_DIR, "commitTree");
     public static final File HEAD_FILE = join(COMMIT_DIR, "HEAD");
+
 
     private static HashMap<String, Commit> commitTree;
     private static Commit HEAD;
@@ -56,7 +61,7 @@ public class Repository {
         if (GITLET_DIR.exists()) {
             exitWithErr("A Gitlet version-control system already exists in the current directory.");
         }
-        if (!(GITLET_DIR.mkdir() && BLOB_DIR.mkdir() && COMMIT_DIR.mkdir())) {
+        if (!(GITLET_DIR.mkdir() && BLOB_DIR.mkdir() && COMMIT_DIR.mkdir() && STAGE_DIR.mkdir())) {
             exitWithErr("Failed to create init directory.");
         }
 
@@ -71,6 +76,51 @@ public class Repository {
         commitTree.put(commitHash, initial);
         HEAD = initial;
         saveRepo();
+    }
+
+    public static void add(String filename) throws IOException {
+        File inputFile = new File(filename);
+        if (!inputFile.exists()) {
+            exitWithErr("File does not exist.");
+        }
+        File stageFilename = join(STAGE_DIR, filename);
+        File oldFile = null;
+        boolean isNewFile = true;
+        File[] fileList = HEAD.getFiles();
+        if (fileList != null) {
+            for (File file : fileList) {
+                if (filename.equals(file.getName())) {
+                    oldFile = new File(file.getName());
+                    isNewFile = false;
+                    break;
+                }
+            }
+        }
+
+        String oldFileContents = null;
+        if (oldFile != null) {
+            oldFileContents = readContentsAsString(oldFile);
+        }
+        String newFileContents = readContentsAsString(inputFile);
+
+        // New file or modified file
+        if (isNewFile || !sha1(oldFileContents).equals(sha1(newFileContents))) {
+            if (!stageFilename.exists()) {
+                Files.createFile(stageFilename.toPath());
+            }
+            Files.deleteIfExists(stageFilename.toPath());
+            Files.copy(inputFile.toPath(), stageFilename.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            // Same, unmodified file
+        } else {
+            //remove from stage area
+            if (stageFilename.exists()) {
+                restrictedDelete(stageFilename);
+            }
+        }
+    }
+
+    public static void commit(String message) {
+
     }
 
     public static void log() {

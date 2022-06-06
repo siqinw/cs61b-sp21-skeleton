@@ -1,6 +1,8 @@
 package gitlet;
 
 
+import java.io.IOException;
+
 import static gitlet.Repository.exitWithErr;
 
 /**
@@ -14,7 +16,7 @@ public class Main {
      * Usage: java gitlet.Main ARGS, where ARGS contains
      * <COMMAND> <OPERAND1> <OPERAND2> ...
      */
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         if (args.length == 0) {
             exitWithErr("Please enter a command.");
         }
@@ -33,6 +35,13 @@ public class Main {
                 if (!validateNumArgs(args, 2)) {
                     exitWithErr("Incorrect operands.");
                 }
+                Repository.add(args[1]);
+                break;
+            case "commit":
+                if (!validateNumArgs(args, 2)) {
+                    exitWithErr("Incorrect operands.");
+                }
+                Repository.commit(args[1]);
                 break;
             case "log":
                 if (!validateNumArgs(args, 1)) {

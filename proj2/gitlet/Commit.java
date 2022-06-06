@@ -68,4 +68,8 @@ public class Commit implements Serializable {
     public Commit getFirstParent() {
         return firstParent;
     }
+
+    public File[] getFiles() {
+        return files;
+    }
 }
