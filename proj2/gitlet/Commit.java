@@ -2,15 +2,18 @@ package gitlet;
 
 // TODO: any imports you need here
 
-import java.util.Date; // TODO: You'll likely use this in this class
+import java.io.File;
+import java.io.Serializable;
+import java.util.Date;
 
-/** Represents a gitlet commit object.
- *  TODO: It's a good idea to give a description here of what else this Class
- *  does at a high level.
+/**
+ * Represents a gitlet commit object.
+ * TODO: It's a good idea to give a description here of what else this Class
+ * does at a high level.
  *
- *  @author TODO
+ * @author TODO
  */
-public class Commit {
+public class Commit implements Serializable {
     /**
      * TODO: add instance variables here.
      *
@@ -19,8 +22,50 @@ public class Commit {
      * variable is used. We've provided one example for `message`.
      */
 
-    /** The message of this Commit. */
+    /**
+     * The message of this Commit.
+     */
     private String message;
+    private String commitHash;
+    private File[] files;
+    private Date timestamp;
+    private Commit firstParent;
+    private Commit secondParent;
+//    private boolean
 
-    /* TODO: fill in the rest of this class. */
+
+    Commit(String msg, Date tsp, String commitHash, File[] files, Commit firstParent, Commit secondParent) {
+        this.message = msg;
+        this.timestamp = tsp;
+        this.firstParent = firstParent;
+        this.secondParent = secondParent;
+        this.commitHash = commitHash;
+        this.files = files;
+    }
+
+
+    public void printLog() {
+        System.out.println("===");
+        System.out.println("commit " + commitHash);
+        if (secondParent != null) {
+            System.out.print("Merge: ");
+            char[] firstChars = new char[7], secondChars = new char[7];
+            firstParent.commitHash.getChars(0, 7, firstChars, 0);
+            secondParent.commitHash.getChars(0, 7, secondChars, 0);
+            for (int i = 0; i < 7; i++) {
+                System.out.print(firstChars[i]);
+            }
+            System.out.print(" ");
+            for (int i = 0; i < 7; i++) {
+                System.out.print(secondChars[i]);
+            }
+            System.out.println();
+        }
+        System.out.println("Date: " + timestamp);
+        System.out.println(message);
+    }
+
+    public Commit getFirstParent() {
+        return firstParent;
+    }
 }
