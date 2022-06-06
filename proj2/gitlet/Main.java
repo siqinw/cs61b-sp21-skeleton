@@ -43,6 +43,12 @@ public class Main {
                 }
                 Repository.commit(args[1]);
                 break;
+            case "rm":
+                if (!validateNumArgs(args, 2)) {
+                    exitWithErr("Incorrect operands.");
+                }
+                Repository.remove(args[1]);
+                break;
             case "log":
                 if (!validateNumArgs(args, 1)) {
                     exitWithErr("Incorrect operands.");

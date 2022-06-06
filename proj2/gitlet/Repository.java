@@ -4,10 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.GregorianCalendar;
-import java.util.HashMap;
+import java.util.*;
 
 import static gitlet.Utils.*;
 
@@ -42,9 +39,12 @@ public class Repository {
     public static final File COMMITS_FILE = join(COMMIT_DIR, "commitTree");
     public static final File HEAD_FILE = join(COMMIT_DIR, "HEAD");
 
+    public static final File RL_FILE = join(STAGE_DIR, "removeList");
+
 
     private static HashMap<String, Commit> commitTree;
     private static Commit HEAD;
+    private static LinkedList<String> removeList;
 
     public static void readData() {
         if (!(GITLET_DIR.exists() && BLOB_DIR.exists() && COMMIT_DIR.exists())) {
@@ -55,6 +55,7 @@ public class Repository {
         // HashMap, HEAD,
         commitTree = readObject(COMMITS_FILE, HashMap.class);
         HEAD = readObject(HEAD_FILE, Commit.class);
+        removeList = readObject(RL_FILE, LinkedList.class);
     }
 
     public static void init() {
@@ -75,6 +76,7 @@ public class Repository {
         commitTree = new HashMap<>();
         commitTree.put(commitHash, initial);
         HEAD = initial;
+        removeList = new LinkedList<>();
         saveRepo();
     }
 
@@ -85,7 +87,7 @@ public class Repository {
         }
         File stageFilename = join(STAGE_DIR, filename);
         File oldFile = null;
-        boolean isNewFile = true;
+        boolean isNewFile = HEAD.containsFile(filename);
         File[] fileList = HEAD.getFiles();
         if (fileList != null) {
             for (File file : fileList) {
@@ -108,7 +110,6 @@ public class Repository {
             if (!stageFilename.exists()) {
                 Files.createFile(stageFilename.toPath());
             }
-            Files.deleteIfExists(stageFilename.toPath());
             Files.copy(inputFile.toPath(), stageFilename.toPath(), StandardCopyOption.REPLACE_EXISTING);
             // Same, unmodified file
         } else {
@@ -123,6 +124,23 @@ public class Repository {
 
     }
 
+    public static void remove(String filename) throws IOException {
+        File stageFile = join(STAGE_DIR, filename);
+
+        boolean isTracked = HEAD.trackFile(filename);
+        // If not staged/tracked or if removed already
+        if ((!stageFile.exists() && !isTracked) || removeList.contains(filename)) {
+            exitWithErr("No reason to remove the file.");
+        }
+        if (stageFile.exists()) {
+            Files.delete(stageFile.toPath());
+        }
+        if (isTracked) {
+            removeList.add(filename);
+        }
+
+    }
+
     public static void log() {
         Commit commit = HEAD;
         while (commit != null) {
@@ -134,6 +152,7 @@ public class Repository {
     public static void saveRepo() {
         writeObject(COMMITS_FILE, commitTree);
         writeObject(HEAD_FILE, HEAD);
+        writeObject(RL_FILE, removeList);
     }
 
     public static void exitWithErr(String msg) {
