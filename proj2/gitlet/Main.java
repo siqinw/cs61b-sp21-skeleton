@@ -38,7 +38,7 @@ public class Main {
                 Repository.add(args[1]);
                 break;
             case "commit":
-                if (args.length == 1){
+                if (args.length == 1) {
                     exitWithErr("Please enter a commit message.");
                 } else if (!validateNumArgs(args, 2)) {
                     exitWithErr("Incorrect operands.");
@@ -58,12 +58,34 @@ public class Main {
                 Repository.log();
                 break;
             case "global-log":
-            if (!validateNumArgs(args, 1)) {
-                exitWithErr("Incorrect operands.");
-            }
-            Repository.globalLog();
-            break;                
-            // TODO: FILL THE REST IN
+                if (!validateNumArgs(args, 1)) {
+                    exitWithErr("Incorrect operands.");
+                }
+                Repository.globalLog();
+                break;
+            case "find":
+                if (!validateNumArgs(args, 1)) {
+                    exitWithErr("Incorrect operands.");
+                }
+                Repository.find();
+                break;
+            case "status":
+                if (!validateNumArgs(args, 1)) {
+                    exitWithErr("Incorrect operands.");
+                }
+                Repository.status();
+                break;
+            case "checkout":
+                if (args.length == 3 && args[1].equals("==")) {
+                    Repository.checkoutFile(args[2]);
+                } else if (args.length == 4 && args[2].equals("==")) {
+                    Repository.checkoutFile(args[1], args[3]);
+                } else if (args.length == 2) {
+                    Repository.checkout(args[1]);
+                } else {
+                    exitWithErr("Incorrect operands.");
+                }
+                // TODO: FILL THE REST IN
             default:
                 exitWithErr("No command with that name exists.");
         }

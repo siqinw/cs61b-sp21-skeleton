@@ -64,7 +64,6 @@ public class Commit implements Serializable {
         }
         System.out.println("Date: " + timestamp);
         System.out.println(message);
-        System.out.println();
     }
 
     public Commit getFirstParent() {
@@ -87,5 +86,13 @@ public class Commit implements Serializable {
             return false;
         }
         return files.containsKey(filename);
+    }
+
+    public String getHash() {
+        return commitHash;
+    }
+
+    public String getMessage() {
+        return message;
     }
 }

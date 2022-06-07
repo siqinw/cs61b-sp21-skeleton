@@ -39,11 +39,16 @@ public class Repository {
     public static final File COMMITS_FILE = join(COMMIT_DIR, "commitTree");
     public static final File HEAD_FILE = join(COMMIT_DIR, "HEAD");
     public static final File RL_FILE = join(COMMIT_DIR, "removeList");
+    public static final File BR_FILE = join(COMMIT_DIR, "branches");
+    public static final File CUR_BR_FILE = join(COMMIT_DIR, "currentBranch");
 
 
     private static HashMap<String, Commit> commitTree;
     private static Commit HEAD;
     private static LinkedList<String> removeList;
+    private static HashMap<String, Commit> branches;
+    private static String currentBranch;
+
 
     public static void init() {
         if (GITLET_DIR.exists()) {
@@ -64,6 +69,9 @@ public class Repository {
         commitTree.put(commitHash, initial);
         HEAD = initial;
         removeList = new LinkedList<>();
+        branches = new HashMap<>();
+        branches.put("master", initial);
+        currentBranch = "master";
         saveRepo();
     }
 
@@ -87,7 +95,7 @@ public class Repository {
 
         // New file or modified file
         if (isNewFile || !sha1(oldFileContents).equals(sha1(newFileContents))) {
-        if (!stageFilename.exists()) {
+            if (!stageFilename.exists()) {
                 Files.createFile(stageFilename.toPath());
             }
             Files.copy(inputFile.toPath(), stageFilename.toPath(), StandardCopyOption.REPLACE_EXISTING);
@@ -101,7 +109,7 @@ public class Repository {
         saveRepo();
     }
 
-    public static void commit(String message) throws  IOException{
+    public static void commit(String message) throws IOException {
         Calendar cal = new GregorianCalendar();
         Date date = cal.getTime();
         String commitHash = sha1(date.toString());
@@ -110,33 +118,35 @@ public class Repository {
         List<String> stagedFiles = plainFilenamesIn(STAGE_DIR);
 
         // Nothing to be commited
-        if (stagedFiles == null && removeList.size() == 0){
+        if (stagedFiles == null && removeList.size() == 0) {
             exitWithErr("No changes added to the commit.");
         }
 
-        for (String s : stagedFiles){
-            File stagedPath = join(STAGE_DIR, s);
-            File commitPath = join(BLOB_DIR, s);
-            int versionNumber = 0;
-            // Hard code, need to find max version number
-            if (!commitPath.exists()){
-                commitPath.mkdirs();
-            } else {
-                // Get max
-                versionNumber = getMaxVersion(s) + 1;                 
-            }
+        if (stagedFiles != null) {
+            for (String s : stagedFiles) {
+                File stagedPath = join(STAGE_DIR, s);
+                File commitPath = join(BLOB_DIR, s);
+                int versionNumber = 0;
+                // Hard code, need to find max version number
+                if (!commitPath.exists()) {
+                    commitPath.mkdirs();
+                } else {
+                    // Get max
+                    versionNumber = getMaxVersion(s) + 1;
+                }
 
-            File blobPath = join(commitPath, String.valueOf(versionNumber));
-            blobPath.createNewFile();
-            Files.move(stagedPath.toPath(), blobPath.toPath(), StandardCopyOption.REPLACE_EXISTING);
-            fileHashMap.put(s, blobPath);
+                File blobPath = join(commitPath, String.valueOf(versionNumber));
+                blobPath.createNewFile();
+                Files.move(stagedPath.toPath(), blobPath.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                fileHashMap.put(s, blobPath);
+            }
         }
 
-        for (String s : removeList){
+        for (String s : removeList) {
             fileHashMap.remove(s);
             File fileDir = join(BLOB_DIR, s);
             // System.out.println(fileDir);
-            if (deleteDirectory(fileDir) == false){
+            if (deleteDirectory(fileDir) == false) {
                 exitWithErr("Delete Directory failed");
             }
             removeList.remove(s);
@@ -158,7 +168,7 @@ public class Repository {
             exitWithErr("No reason to remove the file.");
         }
         // Delete from working dir
-        if (workFile.delete() == false){
+        if (workFile.delete() == false) {
             exitWithErr("Delete file failed");
         }
 
@@ -180,16 +190,90 @@ public class Repository {
         }
     }
 
-    public static void globalLog(){
-        for (Commit c : new commitTree.values()){
+    public static void globalLog() {
+        for (Commit c : commitTree.values()) {
             c.printLog();
         }
+    }
+
+    public static void find(String message) {
+        int match = 0;
+        for (Commit c : commitTree.values()) {
+            if (message.equals(c.getMessage())) {
+                System.out.println(c.getHash());
+                match++;
+            }
+        }
+        if (match == 0) {
+            exitWithErr("Found no commit with that message.");
+        }
+    }
+
+    public static void status() {
+        System.out.println("=== Branches ===");
+        for (String s : branches.keySet()) {
+            if (currentBranch.equals(s)) {
+                System.out.print("*");
+            }
+            System.out.println(s);
+        }
+        System.out.println();
+
+        System.out.println("=== Staged Files ===");
+        List<String> stagedFiles = plainFilenamesIn(STAGE_DIR);
+        if (stagedFiles != null) {
+            for (String s : stagedFiles) {
+                System.out.println(s);
+            }
+        }
+        System.out.println();
+
+        System.out.println("=== Removed Files ===");
+        Collections.sort(removeList);
+        for (String s : removeList) {
+            System.out.println(s);
+        }
+        System.out.println();
+
+        System.out.println("=== Modifications Not Staged For Commit ===");
+        System.out.println();
+
+        System.out.println("=== Untracked Files ===");
+        System.out.println();
+
+
+    }
+
+    public static void checkoutFile(String filename) throws IOException {
+        checkoutFile(HEAD.getHash(), filename);
+    }
+
+    public static void checkoutFile(String commitHash, String filename) throws IOException {
+        Commit c = commitTree.get(commitHash);
+        if (!c.containsFile(filename)) {
+            exitWithErr("File does not exist in that commit.");
+        }
+        File workFile = join(CWD, filename);
+        File commitFile = c.getFile(filename);
+        if (!workFile.exists()) {
+            workFile.createNewFile();
+        }
+        Files.copy(commitFile.toPath(), workFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+    }
+
+    public static void checkout(String commitHash) {
+//        Commit branchHead = branches.get(commitHash);
+//
+//        HEAD = branchHead;
+//        currentBranch =
     }
 
     public static void saveRepo() {
         writeObject(COMMITS_FILE, commitTree);
         writeObject(HEAD_FILE, HEAD);
         writeObject(RL_FILE, removeList);
+        writeObject(BR_FILE, branches);
+        writeObject(CUR_BR_FILE, currentBranch);
     }
 
     public static void readData() {
@@ -198,10 +282,12 @@ public class Repository {
         }
 
         // Read in metadata from disk
-        // HashMap, HEAD,
+        // commit tree, HEAD, branch
         commitTree = readObject(COMMITS_FILE, HashMap.class);
         HEAD = readObject(HEAD_FILE, Commit.class);
         removeList = readObject(RL_FILE, LinkedList.class);
+        branches = readObject(BR_FILE, HashMap.class);
+        currentBranch = readObject(CUR_BR_FILE, String.class);
     }
 
 
@@ -210,14 +296,14 @@ public class Repository {
         System.exit(0);
     }
 
-    private static int getMaxVersion(String filename){
+    private static int getMaxVersion(String filename) {
         File blobs = join(BLOB_DIR, filename);
         List<String> filenameList = plainFilenamesIn(blobs);
         // No plain file at all
-        if (filename == null){
+        if (filename == null) {
             return -1;
         }
-        return Integer.parseInt(filenameList.get(filenameList.size()-1));
+        return Integer.parseInt(filenameList.get(filenameList.size() - 1));
     }
 
     private static boolean deleteDirectory(File directoryToBeDeleted) {
