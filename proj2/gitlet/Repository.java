@@ -71,7 +71,7 @@ public class Repository {
         Date date = cal.getTime();
         String commitHash = sha1(date.toString());
 
-        Commit initial = new Commit("initial commit", date, commitHash, null, null, null);
+        Commit initial = new Commit("initial commit", date, commitHash, new HashMap<String, File>(), null, null);
 
         commitTree = new HashMap<>();
         commitTree.put(commitHash, initial);
@@ -100,7 +100,7 @@ public class Repository {
 
         // New file or modified file
         if (isNewFile || !sha1(oldFileContents).equals(sha1(newFileContents))) {
-            if (!stageFilename.exists()) {
+        if (!stageFilename.exists()) {
                 Files.createFile(stageFilename.toPath());
             }
             Files.copy(inputFile.toPath(), stageFilename.toPath(), StandardCopyOption.REPLACE_EXISTING);
@@ -113,8 +113,39 @@ public class Repository {
         }
     }
 
-    public static void commit(String message) {
-        
+    public static void commit(String message) throws  IOException{
+        Calendar cal = new GregorianCalendar();
+        Date date = cal.getTime();
+        String commitHash = sha1(date.toString());
+
+        HashMap<String, File> fileHashMap = new HashMap<>(HEAD.getFiles());
+        List<String> stagedFiles = plainFilenamesIn(STAGE_DIR);
+        for (String s : stagedFiles){
+            File stagedPath = join(STAGE_DIR, s);
+            File commitPath = join(BLOB_DIR, s);
+            int versionNumber = 0;
+            // Hard code, need to find max version number
+            if (!commitPath.exists()){
+                commitPath.mkdirs();
+            } else {
+                // Get max
+                versionNumber = getMaxVersion(s) + 1;                 
+            }
+
+            File blobPath = join(commitPath, String.valueOf(versionNumber));
+            blobPath.createNewFile();
+            Files.move(stagedPath.toPath(), blobPath.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            fileHashMap.put(s, blobPath);
+        }
+        for (String s : removeList){
+            fileHashMap.remove(s);
+            removeList.remove(s);
+        }
+
+        Commit newCommit = new Commit(message, date, commitHash, fileHashMap, HEAD, null);
+        commitTree.put(commitHash, newCommit);
+        HEAD = newCommit;
+        saveRepo();
     }
 
     public static void remove(String filename) throws IOException {
@@ -153,5 +184,14 @@ public class Repository {
         System.exit(0);
     }
 
+    private static int getMaxVersion(String filename){
+        File blobs = join(BLOB_DIR, filename);
+        List<String> filenameList = plainFilenamesIn(blobs);
+        // No plain file at all
+        if (filename == null){
+            return -1;
+        }
+        return Integer.parseInt(filenameList.get(filenamlist.size()-1));
+    }
 }
 
