@@ -38,7 +38,9 @@ public class Main {
                 Repository.add(args[1]);
                 break;
             case "commit":
-                if (!validateNumArgs(args, 2)) {
+                if (args.length == 1){
+                    exitWithErr("Please enter a commit message.");
+                } else if (!validateNumArgs(args, 2)) {
                     exitWithErr("Incorrect operands.");
                 }
                 Repository.commit(args[1]);
@@ -55,6 +57,12 @@ public class Main {
                 }
                 Repository.log();
                 break;
+            case "global-log":
+            if (!validateNumArgs(args, 1)) {
+                exitWithErr("Incorrect operands.");
+            }
+            Repository.globalLog();
+            break;                
             // TODO: FILL THE REST IN
             default:
                 exitWithErr("No command with that name exists.");

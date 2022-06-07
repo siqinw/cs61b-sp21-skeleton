@@ -64,6 +64,7 @@ public class Commit implements Serializable {
         }
         System.out.println("Date: " + timestamp);
         System.out.println(message);
+        System.out.println();
     }
 
     public Commit getFirstParent() {

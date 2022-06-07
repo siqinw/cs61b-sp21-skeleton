@@ -38,25 +38,12 @@ public class Repository {
 
     public static final File COMMITS_FILE = join(COMMIT_DIR, "commitTree");
     public static final File HEAD_FILE = join(COMMIT_DIR, "HEAD");
-
-    public static final File RL_FILE = join(STAGE_DIR, "removeList");
+    public static final File RL_FILE = join(COMMIT_DIR, "removeList");
 
 
     private static HashMap<String, Commit> commitTree;
     private static Commit HEAD;
     private static LinkedList<String> removeList;
-
-    public static void readData() {
-        if (!(GITLET_DIR.exists() && BLOB_DIR.exists() && COMMIT_DIR.exists())) {
-            exitWithErr("Not in an initialized Gitlet directory.");
-        }
-
-        // Read in metadata from disk
-        // HashMap, HEAD,
-        commitTree = readObject(COMMITS_FILE, HashMap.class);
-        HEAD = readObject(HEAD_FILE, Commit.class);
-        removeList = readObject(RL_FILE, LinkedList.class);
-    }
 
     public static void init() {
         if (GITLET_DIR.exists()) {
@@ -111,6 +98,7 @@ public class Repository {
                 restrictedDelete(stageFilename);
             }
         }
+        saveRepo();
     }
 
     public static void commit(String message) throws  IOException{
@@ -120,6 +108,12 @@ public class Repository {
 
         HashMap<String, File> fileHashMap = new HashMap<>(HEAD.getFiles());
         List<String> stagedFiles = plainFilenamesIn(STAGE_DIR);
+
+        // Nothing to be commited
+        if (stagedFiles == null && removeList.size() == 0){
+            exitWithErr("No changes added to the commit.");
+        }
+
         for (String s : stagedFiles){
             File stagedPath = join(STAGE_DIR, s);
             File commitPath = join(BLOB_DIR, s);
@@ -137,8 +131,14 @@ public class Repository {
             Files.move(stagedPath.toPath(), blobPath.toPath(), StandardCopyOption.REPLACE_EXISTING);
             fileHashMap.put(s, blobPath);
         }
+
         for (String s : removeList){
             fileHashMap.remove(s);
+            File fileDir = join(BLOB_DIR, s);
+            // System.out.println(fileDir);
+            if (deleteDirectory(fileDir) == false){
+                exitWithErr("Delete Directory failed");
+            }
             removeList.remove(s);
         }
 
@@ -150,12 +150,18 @@ public class Repository {
 
     public static void remove(String filename) throws IOException {
         File stageFile = join(STAGE_DIR, filename);
-
+        File workFile = join(CWD, filename);
         boolean isTracked = HEAD.containsFile(filename);
+
         // If not staged/tracked or if removed already
         if ((!stageFile.exists() && !isTracked) || removeList.contains(filename)) {
             exitWithErr("No reason to remove the file.");
         }
+        // Delete from working dir
+        if (workFile.delete() == false){
+            exitWithErr("Delete file failed");
+        }
+
         if (stageFile.exists()) {
             Files.delete(stageFile.toPath());
         }
@@ -163,6 +169,7 @@ public class Repository {
             removeList.add(filename);
         }
 
+        saveRepo();
     }
 
     public static void log() {
@@ -173,11 +180,30 @@ public class Repository {
         }
     }
 
+    public static void globalLog(){
+        for (Commit c : new commitTree.values()){
+            c.printLog();
+        }
+    }
+
     public static void saveRepo() {
         writeObject(COMMITS_FILE, commitTree);
         writeObject(HEAD_FILE, HEAD);
         writeObject(RL_FILE, removeList);
     }
+
+    public static void readData() {
+        if (!(GITLET_DIR.exists() && BLOB_DIR.exists() && COMMIT_DIR.exists())) {
+            exitWithErr("Not in an initialized Gitlet directory.");
+        }
+
+        // Read in metadata from disk
+        // HashMap, HEAD,
+        commitTree = readObject(COMMITS_FILE, HashMap.class);
+        HEAD = readObject(HEAD_FILE, Commit.class);
+        removeList = readObject(RL_FILE, LinkedList.class);
+    }
+
 
     public static void exitWithErr(String msg) {
         System.out.println(msg);
@@ -191,7 +217,17 @@ public class Repository {
         if (filename == null){
             return -1;
         }
-        return Integer.parseInt(filenameList.get(filenamlist.size()-1));
+        return Integer.parseInt(filenameList.get(filenameList.size()-1));
+    }
+
+    private static boolean deleteDirectory(File directoryToBeDeleted) {
+        File[] allContents = directoryToBeDeleted.listFiles();
+        if (allContents != null) {
+            for (File file : allContents) {
+                deleteDirectory(file);
+            }
+        }
+        return directoryToBeDeleted.delete();
     }
 }
 
