@@ -64,10 +64,10 @@ public class Main {
                 Repository.globalLog();
                 break;
             case "find":
-                if (!validateNumArgs(args, 1)) {
+                if (!validateNumArgs(args, 2)) {
                     exitWithErr("Incorrect operands.");
                 }
-                Repository.find();
+                Repository.find(args[1]);
                 break;
             case "status":
                 if (!validateNumArgs(args, 1)) {
