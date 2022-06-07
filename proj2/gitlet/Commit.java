@@ -2,9 +2,10 @@ package gitlet;
 
 // TODO: any imports you need here
 
+import java.io.File;
 import java.io.Serializable;
 import java.util.Date;
-import java.util.Set;
+import java.util.HashMap;
 
 /**
  * Represents a gitlet commit object.
@@ -27,20 +28,20 @@ public class Commit implements Serializable {
      */
     private String message;
     private String commitHash;
-    private Set<String> filenames;
+    private HashMap<String, File> files;
     private Date timestamp;
     private Commit firstParent;
     private Commit secondParent;
 //    private boolean
 
 
-    Commit(String msg, Date tsp, String commitHash, Set<String> filenames, Commit firstParent, Commit secondParent) {
+    Commit(String msg, Date tsp, String commitHash, HashMap<String, File> files, Commit firstParent, Commit secondParent) {
         this.message = msg;
         this.timestamp = tsp;
         this.firstParent = firstParent;
         this.secondParent = secondParent;
         this.commitHash = commitHash;
-        this.filenames = filenames;
+        this.files = files;
     }
 
 
@@ -69,14 +70,21 @@ public class Commit implements Serializable {
         return firstParent;
     }
 
-    public Set<String> getFiles() {
-        return filenames;
+    public HashMap<String, File> getFiles() {
+        return files;
+    }
+
+    public File getFile(String filename) {
+        if (files == null) {
+            return null;
+        }
+        return files.get(filename);
     }
 
     public boolean containsFile(String filename) {
-        if (filenames == null) {
+        if (files == null) {
             return false;
         }
-        return filenames.contains(filename);
+        return files.containsKey(filename);
     }
 }

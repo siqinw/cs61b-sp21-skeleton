@@ -87,16 +87,9 @@ public class Repository {
         }
         File stageFilename = join(STAGE_DIR, filename);
         File oldFile = null;
-        boolean isNewFile = HEAD.containsFile(filename);
-        File[] fileList = HEAD.getFiles();
-        if (fileList != null) {
-            for (File file : fileList) {
-                if (filename.equals(file.getName())) {
-                    oldFile = new File(file.getName());
-                    isNewFile = false;
-                    break;
-                }
-            }
+        boolean isNewFile = !HEAD.containsFile(filename);
+        if (!isNewFile) {
+            oldFile = HEAD.getFile(filename);
         }
 
         String oldFileContents = null;
@@ -121,13 +114,13 @@ public class Repository {
     }
 
     public static void commit(String message) {
-
+        
     }
 
     public static void remove(String filename) throws IOException {
         File stageFile = join(STAGE_DIR, filename);
 
-        boolean isTracked = HEAD.trackFile(filename);
+        boolean isTracked = HEAD.containsFile(filename);
         // If not staged/tracked or if removed already
         if ((!stageFile.exists() && !isTracked) || removeList.contains(filename)) {
             exitWithErr("No reason to remove the file.");
