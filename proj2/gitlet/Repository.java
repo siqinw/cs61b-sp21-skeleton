@@ -156,6 +156,7 @@ public class Repository {
         Commit newCommit = new Commit(message, date, commitHash, fileHashMap, HEAD, null);
         commitTree.put(commitHash, newCommit);
         HEAD = newCommit;
+        branches.put(currentBranch, newCommit);
         saveRepo();
     }
 
@@ -262,17 +263,95 @@ public class Repository {
         Files.copy(commitFile.toPath(), workFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
     }
 
-    public static void checkout(String branchName) {
-        Commit branchHead = branches.get(branchName);
-//        // Copy files from the commit
-//        for (String s : branchHead.getFiles().keySet()) {
-//
-//            checkoutFile(branchHead.getHash(), );
-//        }
-//        // Delete files that don't belong to the commit
+    public static void checkout(String branchName) throws IOException {
+        // Warning on untracked files
+        List<String> filesInCWD = plainFilenamesIn(CWD);
+        if (filesInCWD != null) {
+            for (String filename : filesInCWD) {
+                if (!HEAD.isTracked(filename)) {
+                    exitWithErr("There is an untracked file in the way; delete it, or add and commit it first.");
+                }
+            }
+        }
 
+        Commit branchHead = branches.get(branchName);
+        if (branchHead == null) {
+            exitWithErr("No such branch exists.");
+        }
+        if (branchName.equals(currentBranch)) {
+            exitWithErr("No need to checkout the current branch.");
+        }
+        // Delete files that don't belong to the commit
+        if (filesInCWD != null) {
+            for (String filename : filesInCWD) {
+                if (!branchHead.containsFile(filename)) {
+                    HEAD.getFile(filename).delete();
+                }
+            }
+        }
+        // Copy files from the commit
+        for (String s : branchHead.getFiles().keySet()) {
+            checkoutFile(branchHead.getHash(), s);
+        }
+
+        // Clear staging area
+        deleteDirectory(STAGE_DIR);
+        STAGE_DIR.mkdir();
+
+        // Reset HEAD and current branch
         HEAD = branchHead;
         currentBranch = branchName;
+    }
+
+    public static void branch(String branchName) {
+        if (branches.containsKey(branchName)) {
+            exitWithErr("A branch with that name already exists.");
+        }
+        branches.put(branchName, HEAD);
+    }
+
+    public static void rmBranch(String branchName) {
+        if (!branches.containsKey(branchName)) {
+            exitWithErr("A branch with that name does not exist.");
+        }
+        if (branchName.equals(currentBranch)) {
+            exitWithErr("Cannot remove the current branch.");
+        }
+        branches.remove(branchName);
+    }
+
+    public static void reset(String commitHash) throws IOException {
+        // Warning on untracked files
+        List<String> filesInCWD = plainFilenamesIn(CWD);
+        if (filesInCWD != null) {
+            for (String filename : filesInCWD) {
+                if (!HEAD.isTracked(filename)) {
+                    exitWithErr("There is an untracked file in the way; delete it, or add and commit it first.");
+                }
+            }
+        }
+
+        Commit c = commitTree.get(commitHash);
+        // Delete files that don't belong to the commit
+        if (filesInCWD != null) {
+            for (String filename : filesInCWD) {
+                if (!c.containsFile(filename)) {
+                    HEAD.getFile(filename).delete();
+                }
+            }
+        }
+        // Copy files from the commit
+        for (String s : c.getFiles().keySet()) {
+            checkoutFile(c.getHash(), s);
+        }
+
+        // Clear staging area
+        deleteDirectory(STAGE_DIR);
+        STAGE_DIR.mkdir();
+
+        // Reset HEAD and branch HEAD
+        HEAD = c;
+        branches.put(currentBranch, c);
     }
 
     public static void saveRepo() {

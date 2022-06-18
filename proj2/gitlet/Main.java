@@ -86,7 +86,30 @@ public class Main {
                     exitWithErr("Incorrect operands.");
                 }
                 break;
-            // TODO: FILL THE REST IN
+            case "branch":
+                if (args.length == 2) {
+                    Repository.branch(args[1]);
+                } else {
+                    exitWithErr("Incorrect operands.");
+                }
+            case "rm-branch":
+                if (args.length == 2) {
+                    Repository.rmBranch(args[1]);
+                } else {
+                    exitWithErr("Incorrect operands.");
+                }
+            case "reset":
+                if (args.length == 2) {
+                    Repository.reset(args[1]);
+                } else {
+                    exitWithErr("Incorrect operands.");
+                }
+            case "merge":
+                if (args.length == 2) {
+                    exitWithErr("Not supporting Merge.");
+                } else {
+                    exitWithErr("Incorrect operands.");
+                }
             default:
                 exitWithErr("No command with that name exists.");
         }

@@ -7,6 +7,10 @@ import java.io.Serializable;
 import java.util.Date;
 import java.util.HashMap;
 
+import static gitlet.Repository.CWD;
+import static gitlet.Utils.join;
+import static gitlet.Utils.readContentsAsString;
+
 /**
  * Represents a gitlet commit object.
  * TODO: It's a good idea to give a description here of what else this Class
@@ -84,6 +88,19 @@ public class Commit implements Serializable {
             return null;
         }
         return files.get(filename);
+    }
+
+    public boolean isTracked(String filename) {
+        if (files == null) {
+            return false;
+        }
+        if (!containsFile(filename)) {
+            return false;
+        }
+
+        String tracked = readContentsAsString(getFile(filename));
+        String current = readContentsAsString(join(CWD, filename));
+        return tracked.equals(current);
     }
 
     public boolean containsFile(String filename) {
