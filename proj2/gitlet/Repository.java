@@ -369,10 +369,20 @@ public class Repository {
 
         // Read in metadata from disk
         // commit tree, HEAD, branch
-        commitTree = readObject(COMMITS_FILE, HashMap.class);
+
+        HashMap tmpCT = readObject(COMMITS_FILE, HashMap.class);
+        for (Object k : tmpCT.keySet()) {
+            commitTree.put((String) k, (Commit) tmpCT.get(k));
+        }
         HEAD = readObject(HEAD_FILE, Commit.class);
-        removeList = readObject(RL_FILE, LinkedList.class);
-        branches = readObject(BR_FILE, HashMap.class);
+        LinkedList tmpRL = readObject(RL_FILE, LinkedList.class);
+        for (Object i : tmpRL) {
+            removeList.add((String) i);
+        }
+        HashMap tmpBR = readObject(BR_FILE, HashMap.class);
+        for (Object k : tmpBR.keySet()) {
+            branches.put((String) k, (Commit) tmpCT.get(k));
+        }
         currentBranch = readObject(CUR_BR_FILE, String.class);
     }
 
@@ -400,6 +410,14 @@ public class Repository {
             }
         }
         return directoryToBeDeleted.delete();
+    }
+
+    public static <T> T convertInstanceOfObject(Object o, Class<T> clazz) {
+        try {
+            return clazz.cast(o);
+        } catch (ClassCastException e) {
+            return null;
+        }
     }
 }
 
