@@ -42,10 +42,11 @@ public class Repository {
     public static final File BR_FILE = join(COMMIT_DIR, "branches");
     public static final File CUR_BR_FILE = join(COMMIT_DIR, "currentBranch");
 
-
+    // Map: Hash -> Commit
     private static HashMap<String, Commit> commitTree;
     private static Commit HEAD;
     private static LinkedList<String> removeList;
+    // Map: Branch Name -> Branch Head
     private static HashMap<String, Commit> branches;
     private static String currentBranch;
 
@@ -261,11 +262,17 @@ public class Repository {
         Files.copy(commitFile.toPath(), workFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
     }
 
-    public static void checkout(String commitHash) {
-//        Commit branchHead = branches.get(commitHash);
+    public static void checkout(String branchName) {
+        Commit branchHead = branches.get(branchName);
+//        // Copy files from the commit
+//        for (String s : branchHead.getFiles().keySet()) {
 //
-//        HEAD = branchHead;
-//        currentBranch =
+//            checkoutFile(branchHead.getHash(), );
+//        }
+//        // Delete files that don't belong to the commit
+
+        HEAD = branchHead;
+        currentBranch = branchName;
     }
 
     public static void saveRepo() {

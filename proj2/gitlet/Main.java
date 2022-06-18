@@ -76,16 +76,17 @@ public class Main {
                 Repository.status();
                 break;
             case "checkout":
-                if (args.length == 3 && args[1].equals("==")) {
+                if (args.length == 3 && args[1].equals("--")) {
                     Repository.checkoutFile(args[2]);
-                } else if (args.length == 4 && args[2].equals("==")) {
+                } else if (args.length == 4 && args[2].equals("--")) {
                     Repository.checkoutFile(args[1], args[3]);
                 } else if (args.length == 2) {
                     Repository.checkout(args[1]);
                 } else {
                     exitWithErr("Incorrect operands.");
                 }
-                // TODO: FILL THE REST IN
+                break;
+            // TODO: FILL THE REST IN
             default:
                 exitWithErr("No command with that name exists.");
         }

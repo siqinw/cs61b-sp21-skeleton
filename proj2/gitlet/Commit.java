@@ -4,6 +4,7 @@ package gitlet;
 
 import java.io.File;
 import java.io.Serializable;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 
@@ -62,8 +63,12 @@ public class Commit implements Serializable {
             }
             System.out.println();
         }
-        System.out.println("Date: " + timestamp);
+        SimpleDateFormat format = new SimpleDateFormat("a b e HH:mm:ss yyyy z");
+//        String s = String.format("%a %b %e %HH:mm:ss yyyy %z", timestamp);
+        String dateString = format.format(new Date());
+        System.out.println("Date: " + dateString);
         System.out.println(message);
+        System.out.println();
     }
 
     public Commit getFirstParent() {
