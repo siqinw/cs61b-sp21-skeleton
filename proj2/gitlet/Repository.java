@@ -113,7 +113,6 @@ public class Repository {
     public static void commit(String message) throws IOException {
         Calendar cal = new GregorianCalendar();
         Date date = cal.getTime();
-        String commitHash = sha1(date.toString());
 
         HashMap<String, File> fileHashMap = new HashMap<>(HEAD.getFiles());
         List<String> stagedFiles = plainFilenamesIn(STAGE_DIR);
@@ -153,6 +152,7 @@ public class Repository {
             removeList.remove(s);
         }
 
+        String commitHash = sha1(date.toString() + message + fileHashMap.toString() + HEAD.toString());
         Commit newCommit = new Commit(message, date, commitHash, fileHashMap, HEAD, null);
         commitTree.put(commitHash, newCommit);
         HEAD = newCommit;
@@ -169,7 +169,7 @@ public class Repository {
             exitWithErr("No reason to remove the file.");
         }
         // Delete from working dir
-        if (workFile.delete() == false) {
+        if (!workFile.delete()) {
             exitWithErr("Delete file failed");
         }
 
