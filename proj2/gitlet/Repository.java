@@ -11,13 +11,11 @@ import static gitlet.Utils.*;
 
 /**
  * Represents a gitlet repository.
- * TODO: It's a good idea to give a description here of what else this Class
- * does at a high level.
  *
- * @author TODO
+ * @author Siqin Wang
  */
 public class Repository {
-    /**
+    /*
      *
      * List all instance variables of the Repository class here with a useful
      * comment above them describing what that variable represents and how that
@@ -64,7 +62,7 @@ public class Repository {
         Date date = cal.getTime();
         String commitHash = sha1(date.toString());
 
-        Commit initial = new Commit("initial commit", date, commitHash, new HashMap<String, File>(), null, null);
+        Commit initial = new Commit("initial commit", date, commitHash, new HashMap<>(), null, null);
 
         commitTree = new HashMap<>();
         commitTree.put(commitHash, initial);
@@ -76,7 +74,7 @@ public class Repository {
         saveRepo();
     }
 
-    public static void add(String filename) throws IOException {
+    public static void add(String filename) {
         File inputFile = new File(filename);
         if (!inputFile.exists()) {
             exitWithErr("File does not exist.");
@@ -97,9 +95,18 @@ public class Repository {
         // New file or modified file
         if (isNewFile || !sha1(oldFileContents).equals(sha1(newFileContents))) {
             if (!stageFilename.exists()) {
-                Files.createFile(stageFilename.toPath());
+                try {
+                    Files.createFile(stageFilename.toPath());
+                } catch (IOException e) {
+                    exitWithErr("Failed to create file.");
+                }
             }
-            Files.copy(inputFile.toPath(), stageFilename.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            try {
+                Files.copy(inputFile.toPath(), stageFilename.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            } catch (IOException e) {
+                exitWithErr("Failed to copy file.");
+            }
+
             // Same, unmodified file
         } else {
             //remove from stage area
@@ -110,7 +117,7 @@ public class Repository {
         saveRepo();
     }
 
-    public static void commit(String message) throws IOException {
+    public static void commit(String message) {
         Calendar cal = new GregorianCalendar();
         Date date = cal.getTime();
 
@@ -136,8 +143,12 @@ public class Repository {
                 }
 
                 File blobPath = join(commitPath, String.valueOf(versionNumber));
-                blobPath.createNewFile();
-                Files.move(stagedPath.toPath(), blobPath.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                try {
+                    blobPath.createNewFile();
+                    Files.move(stagedPath.toPath(), blobPath.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                } catch (IOException e) {
+                    exitWithErr("Failed to create or move file.");
+                }
                 fileHashMap.put(s, blobPath);
             }
         }
@@ -146,13 +157,13 @@ public class Repository {
             fileHashMap.remove(s);
             File fileDir = join(BLOB_DIR, s);
             // System.out.println(fileDir);
-            if (deleteDirectory(fileDir) == false) {
+            if (!deleteDirectory(fileDir)) {
                 exitWithErr("Delete Directory failed");
             }
             removeList.remove(s);
         }
 
-        String commitHash = sha1(date.toString() + message + fileHashMap.toString() + HEAD.toString());
+        String commitHash = sha1(date + message + fileHashMap + HEAD.toString());
         Commit newCommit = new Commit(message, date, commitHash, fileHashMap, HEAD, null);
         commitTree.put(commitHash, newCommit);
         HEAD = newCommit;
@@ -160,7 +171,7 @@ public class Repository {
         saveRepo();
     }
 
-    public static void remove(String filename) throws IOException {
+    public static void remove(String filename) {
         File stageFile = join(STAGE_DIR, filename);
         File workFile = join(CWD, filename);
         boolean isTracked = HEAD.containsFile(filename);
@@ -175,7 +186,11 @@ public class Repository {
         }
 
         if (stageFile.exists()) {
-            Files.delete(stageFile.toPath());
+            try {
+                Files.delete(stageFile.toPath());
+            } catch (IOException e) {
+                exitWithErr("Failed to delete file.");
+            }
         }
         if (isTracked) {
             removeList.add(filename);
@@ -246,11 +261,11 @@ public class Repository {
 
     }
 
-    public static void checkoutFile(String filename) throws IOException {
+    public static void checkoutFile(String filename) {
         checkoutFile(HEAD.getHash(), filename);
     }
 
-    public static void checkoutFile(String commitHash, String filename) throws IOException {
+    public static void checkoutFile(String commitHash, String filename) {
         Commit c = commitTree.get(commitHash);
         if (!c.containsFile(filename)) {
             exitWithErr("File does not exist in that commit.");
@@ -258,12 +273,20 @@ public class Repository {
         File workFile = join(CWD, filename);
         File commitFile = c.getFile(filename);
         if (!workFile.exists()) {
-            workFile.createNewFile();
+            try {
+                workFile.createNewFile();
+            } catch (IOException e) {
+                exitWithErr("Failed to create file.");
+            }
         }
-        Files.copy(commitFile.toPath(), workFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        try {
+            Files.copy(commitFile.toPath(), workFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException e) {
+            exitWithErr("Failed to copy file.");
+        }
     }
 
-    public static void checkout(String branchName) throws IOException {
+    public static void checkout(String branchName) {
         // Warning on untracked files
         List<String> filesInCWD = plainFilenamesIn(CWD);
         if (filesInCWD != null) {
@@ -284,6 +307,7 @@ public class Repository {
         // Delete files that don't belong to the commit
         if (filesInCWD != null) {
             for (String filename : filesInCWD) {
+                assert branchHead != null;
                 if (!branchHead.containsFile(filename)) {
                     HEAD.getFile(filename).delete();
                 }
@@ -320,7 +344,7 @@ public class Repository {
         branches.remove(branchName);
     }
 
-    public static void reset(String commitHash) throws IOException {
+    public static void reset(String commitHash) {
         // Warning on untracked files
         List<String> filesInCWD = plainFilenamesIn(CWD);
         if (filesInCWD != null) {
@@ -399,6 +423,7 @@ public class Repository {
         if (filename == null) {
             return -1;
         }
+        assert filenameList != null;
         return Integer.parseInt(filenameList.get(filenameList.size() - 1));
     }
 
@@ -410,14 +435,6 @@ public class Repository {
             }
         }
         return directoryToBeDeleted.delete();
-    }
-
-    public static <T> T convertInstanceOfObject(Object o, Class<T> clazz) {
-        try {
-            return clazz.cast(o);
-        } catch (ClassCastException e) {
-            return null;
-        }
     }
 }
 
