@@ -393,6 +393,9 @@ public class Repository {
 
         // Read in metadata from disk
         // commit tree, HEAD, branch
+        commitTree = new HashMap<>();
+        removeList = new LinkedList<>();
+        branches = new HashMap<>();
 
         HashMap tmpCT = readObject(COMMITS_FILE, HashMap.class);
         for (Object k : tmpCT.keySet()) {
